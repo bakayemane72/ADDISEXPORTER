@@ -2,7 +2,6 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import localtunnel from 'localtunnel';
 
 const port = Number(process.env.PORT ?? 3000);
 const cwd = process.cwd();
@@ -21,27 +20,56 @@ const nextProcess = spawn('npm', ['run', 'start'], {
   shell: process.platform === 'win32',
 });
 
-let tunnel;
+let tunnelProcess;
+let tunnelUrl;
 let shuttingDown = false;
 
 const closeTunnel = async () => {
-  if (!tunnel) return;
+  if (!tunnelProcess || tunnelProcess.exitCode !== null) return;
 
   await new Promise((resolve) => {
-    const onClose = () => {
-      tunnel?.off('close', onClose);
-      resolve();
-    };
+    const timer = setTimeout(() => {
+      if (tunnelProcess && tunnelProcess.exitCode === null) {
+        try {
+          process.kill(tunnelProcess.pid, 'SIGTERM');
+        } catch {
+          // ignore
+        }
+      }
+    }, 5000);
 
-    tunnel.once('close', onClose);
-    tunnel.close();
+    tunnelProcess.once('exit', () => {
+      clearTimeout(timer);
+      resolve();
+    });
+
+    try {
+      process.kill(tunnelProcess.pid, 'SIGINT');
+    } catch {
+      clearTimeout(timer);
+      resolve();
+    }
   }).catch(() => undefined);
 };
 
 const stopNext = () => {
-  if (!nextProcess.killed) {
-    nextProcess.kill('SIGINT');
+  if (nextProcess.exitCode !== null) return;
+
+  try {
+    process.kill(nextProcess.pid, 'SIGINT');
+  } catch {
+    return;
   }
+
+  setTimeout(() => {
+    if (nextProcess.exitCode === null) {
+      try {
+        process.kill(nextProcess.pid, 'SIGTERM');
+      } catch {
+        // ignore
+      }
+    }
+  }, 5000);
 };
 
 const shutdown = async (exitCode = 0) => {
@@ -63,32 +91,54 @@ const logShareUrl = (url) => {
 };
 
 const startTunnel = async () => {
-  try {
-    const options = { port };
-    if (process.env.SHARE_SUBDOMAIN) {
-      options.subdomain = process.env.SHARE_SUBDOMAIN;
-    }
-    if (process.env.SHARE_TUNNEL_HOST) {
-      options.host = process.env.SHARE_TUNNEL_HOST;
-    }
+  console.log('\nOpening a secure localtunnel session with npx...');
 
-    console.log('\nOpening a secure localtunnel session...');
-    tunnel = await localtunnel(options);
-    logShareUrl(tunnel.url);
+  const tunnelArgs = ['localtunnel', '--port', String(port)];
+  if (process.env.SHARE_SUBDOMAIN) {
+    tunnelArgs.push('--subdomain', process.env.SHARE_SUBDOMAIN);
+  }
+  if (process.env.SHARE_TUNNEL_HOST) {
+    tunnelArgs.push('--host', process.env.SHARE_TUNNEL_HOST);
+  }
 
-    tunnel.on('close', () => {
-      if (!shuttingDown) {
-        console.log('\nTunnel closed unexpectedly. Shutting down the server.');
-        shutdown(1);
+  tunnelProcess = spawn('npx', tunnelArgs, {
+    cwd,
+    env: nextEnv,
+    shell: process.platform === 'win32',
+    stdio: ['inherit', 'pipe', 'pipe'],
+  });
+
+  tunnelProcess.stdout.on('data', (chunk) => {
+    const text = chunk.toString();
+    process.stdout.write(text);
+
+    if (!tunnelUrl) {
+      const match = text.match(/https?:\/\/[^\s]+/);
+      if (match) {
+        tunnelUrl = match[0];
+        logShareUrl(tunnelUrl);
       }
-    });
-  } catch (error) {
-    console.error('\nFailed to open a localtunnel session. Make sure you have internet access and try again.');
+    }
+  });
+
+  tunnelProcess.stderr.on('data', (chunk) => {
+    process.stderr.write(chunk);
+  });
+
+  tunnelProcess.on('exit', (code) => {
+    if (!shuttingDown) {
+      console.error(`\nlocaltunnel process exited with code ${code ?? 0}. Stopping the server.`);
+      shutdown(code ?? 1);
+    }
+  });
+
+  tunnelProcess.on('error', (error) => {
+    console.error('\nFailed to launch the localtunnel CLI.');
     if (error) {
       console.error(error.message ?? error);
     }
     shutdown(1);
-  }
+  });
 };
 
 startTunnel();
