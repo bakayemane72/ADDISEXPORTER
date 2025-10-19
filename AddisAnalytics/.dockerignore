@@ -1,0 +1,7 @@
+node_modules
+.next
+prisma/dev.db
+npm-debug.log*
+.DS_Store
+.git
+.gitignore
