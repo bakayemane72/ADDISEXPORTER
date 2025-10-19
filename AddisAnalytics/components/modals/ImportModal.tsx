@@ -73,7 +73,7 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
           <div>
             <h2 className="text-xl font-heading text-text-primary">Import Data</h2>
             <p className="text-sm text-text-muted mt-1">
-              Upload Excel, CSV, JSON, XML, or TXT files
+              Upload Excel, CSV, or JSON exports from your sourcing tools
             </p>
           </div>
           <button
@@ -99,12 +99,12 @@ export function ImportModal({ isOpen, onClose }: ImportModalProps) {
                 {file ? file.name : "Drop your file here or click to browse"}
               </p>
               <p className="text-sm text-text-muted">
-                Supports .xlsx, .xls, .csv, .txt, .json, .xml
+                Supports .xlsx, .xls, .csv, .txt, and .json
               </p>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls,.csv,.txt,.json,.xml"
+                accept=".xlsx,.xls,.csv,.txt,.json"
                 onChange={(e) => {
                   const selectedFile = e.target.files?.[0];
                   if (selectedFile) handleFileSelect(selectedFile);
