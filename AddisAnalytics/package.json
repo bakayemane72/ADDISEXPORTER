@@ -7,6 +7,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "share": "node ./scripts/share.mjs",
     "lint": "node ./scripts/lint.mjs",
     "prisma:generate": "prisma generate",
     "prisma:seed": "tsx prisma/seed.ts"
