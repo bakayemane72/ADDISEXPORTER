@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import * as XLSX from "xlsx";
 
-const prisma = new PrismaClient();
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -16,11 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Read file content
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Determine file type and process accordingly
     const fileType = file.name.split(".").pop()?.toLowerCase();
     let data: any[] = [];
 
@@ -28,38 +24,30 @@ export async function POST(request: NextRequest) {
       const content = buffer.toString("utf-8");
       data = JSON.parse(content);
     } else if (fileType === "csv" || fileType === "txt") {
-      // Simple CSV parsing - handle quoted values and commas within quotes
       const content = buffer.toString("utf-8");
-      const lines = content.split("\n").filter(line => line.trim());
-      
+      const lines = content.split("\n").filter((line) => line.trim());
+
       if (lines.length === 0) {
         return NextResponse.json(
           { error: "CSV file is empty" },
           { status: 400 }
         );
       }
-      
-      // Parse headers
-      const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ''));
-      
-      // Parse data rows
+
+      const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map(v => v.trim().replace(/^"|"$/g, ''));
-        const row: any = {};
+        const values = lines[i].split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
+        const row: Record<string, string> = {};
         headers.forEach((header, index) => {
-          row[header] = values[index] || '';
+          row[header] = values[index] || "";
         });
         data.push(row);
       }
     } else if (fileType === "xlsx" || fileType === "xls") {
-      // Parse Excel file
       const workbook = XLSX.read(buffer, { type: "buffer" });
-      
-      // Get the first sheet
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      
-      // Convert to JSON
       data = XLSX.utils.sheet_to_json(worksheet);
     } else if (fileType === "xml") {
       return NextResponse.json(
@@ -80,18 +68,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit to prevent timeout
-    if (data.length > 1000) {
+    if (data.length > 2000) {
       return NextResponse.json(
-        { error: `File too large (${data.length} rows). Please limit to 1000 rows or contact support for bulk upload.` },
+        { error: `File too large (${data.length} rows). Please limit to 2000 rows or contact support for bulk upload.` },
         { status: 400 }
       );
     }
 
-    // Extract column names from first row
     const columns = Object.keys(data[0]);
 
-    // Get or create organization
     let org = await prisma.org.findFirst();
     if (!org) {
       org = await prisma.org.create({
@@ -103,7 +88,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create data import record
     const dataImport = await prisma.dataImport.create({
       data: {
         orgId: org.id,
@@ -114,14 +98,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create data rows in batches to avoid timeout
     const BATCH_SIZE = 50;
     let savedCount = 0;
 
     for (let i = 0; i < data.length; i += BATCH_SIZE) {
       const batch = data.slice(i, i + BATCH_SIZE);
-      
-      // Process sequentially to avoid timeout
+
       for (const row of batch) {
         await prisma.dataRow.create({
           data: {
@@ -129,7 +111,7 @@ export async function POST(request: NextRequest) {
             data: JSON.stringify(row),
           },
         });
-        savedCount++;
+        savedCount += 1;
       }
     }
 

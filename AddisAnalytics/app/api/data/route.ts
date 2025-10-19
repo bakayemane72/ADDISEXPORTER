@@ -1,35 +1,28 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { prisma, isSchemaOutOfSyncError } from "@/lib/prisma";
+import { parseDataImports, createEmptyDatasetProfile } from "@/lib/data";
 
-const prisma = new PrismaClient();
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const imports = await prisma.dataImport.findMany({
       include: {
         rows: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
-    // Parse JSON data for each import
-    const parsedImports = imports.map((imp) => ({
-      ...imp,
-      columns: JSON.parse(imp.columns),
-      rows: imp.rows.map((row) => ({
-        ...row,
-        data: JSON.parse(row.data),
-      })),
-    }));
+    const dataset = parseDataImports(imports);
 
-    return NextResponse.json(parsedImports);
-  } catch (error: any) {
+    return NextResponse.json(dataset);
+  } catch (error: unknown) {
+    if (isSchemaOutOfSyncError(error)) {
+      console.warn("Database schema not initialised yet; returning empty dataset profile.");
+      return NextResponse.json(createEmptyDatasetProfile());
+    }
+
     console.error("Error fetching data:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch data" }, { status: 500 });
   }
 }
