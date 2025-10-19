@@ -89,29 +89,6 @@ Build and run the self-contained image to distribute the app without installing 
 
 3. Visit `http://localhost:3000` (or the mapped host/port) to access the production UI.
 
-### Share a temporary public link
-
-Follow these steps to generate a link you can send to stakeholders:
-
-1. Build the production bundle so the optimized assets and Prisma client are ready. You only need to do this once per code change.
-
-   ```bash
-   npm run build
-   ```
-
-2. From the `AddisAnalytics` directory, start the sharing workflow. The script first synchronizes the SQLite schema with `npx prisma db push`, then launches the production server and opens a tunnel via [`npx localtunnel`](https://github.com/localtunnel/localtunnel), so no global installs are required. The sync runs with `--accept-data-loss` by default to avoid interactive prompts; set `SHARE_ACCEPT_DATA_LOSS=false` beforehand if you prefer to review Prisma warnings manually.
-
-   ```bash
-   npm run share
-   ```
-
-3. Wait for the terminal to print a URL similar to `https://radiant-espresso.loca.lt`. This is the public link you can share. Leave the command running to keep the tunnel and server alive.
-
-4. When you are finished sharing access, press `Ctrl+C` to shut down both the tunnel and the Next.js server.
-
-   - Optional: set `SHARE_SUBDOMAIN=my-demo` before running the script if you want a predictable subdomain (subject to availability).
-   - Optional: set `SHARE_TUNNEL_HOST=https://<your-localtunnel-host>` to use a self-hosted LocalTunnel relay instead of the default `loca.lt` service.
-
 ## Environment notes
 
 - The AI assistant runs locally—no `OPENAI_API_KEY` is required. It analyses the ingested dataset using deterministic heuristics.
