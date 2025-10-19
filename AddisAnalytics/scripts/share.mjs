@@ -2,6 +2,7 @@
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import localtunnel from 'localtunnel';
 
 const port = Number(process.env.PORT ?? 3000);
 const cwd = process.cwd();
@@ -20,70 +21,95 @@ const nextProcess = spawn('npm', ['run', 'start'], {
   shell: process.platform === 'win32',
 });
 
-const sshArgs = [
-  '-T',
-  '-N',
-  '-o',
-  'StrictHostKeyChecking=no',
-  '-o',
-  'ServerAliveInterval=60',
-  '-o',
-  'ServerAliveCountMax=3',
-  '-R',
-  `80:localhost:${port}`,
-  'nokey@localhost.run',
-];
+let tunnel;
+let shuttingDown = false;
 
-const tunnelProcess = spawn('ssh', sshArgs, {
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const closeTunnel = async () => {
+  if (!tunnel) return;
 
-let announced = false;
+  await new Promise((resolve) => {
+    const onClose = () => {
+      tunnel?.off('close', onClose);
+      resolve();
+    };
 
-const highlightOutput = (data) => {
-  const text = data.toString();
-  process.stdout.write(`[tunnel] ${text}`);
-  if (!announced) {
-    const match = text.match(/https?:\/\/[^\s]+/);
-    if (match) {
-      announced = true;
-      console.log('\n────────────────────────────────────────');
-      console.log('Shareable link ready:');
-      console.log(`  ${match[0]}`);
-      console.log('\nKeep this terminal open to keep the tunnel active. Press Ctrl+C to stop.');
-      console.log('────────────────────────────────────────\n');
-    }
-  }
+    tunnel.once('close', onClose);
+    tunnel.close();
+  }).catch(() => undefined);
 };
 
-tunnelProcess.stdout.on('data', highlightOutput);
-tunnelProcess.stderr.on('data', highlightOutput);
-
-const shutdown = () => {
-  if (!tunnelProcess.killed) {
-    tunnelProcess.kill('SIGINT');
-  }
+const stopNext = () => {
   if (!nextProcess.killed) {
     nextProcess.kill('SIGINT');
   }
-  process.exit(0);
 };
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+const shutdown = async (exitCode = 0) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+
+  await closeTunnel();
+  stopNext();
+
+  process.exit(exitCode);
+};
+
+const logShareUrl = (url) => {
+  console.log('\n────────────────────────────────────────');
+  console.log('Shareable link ready:');
+  console.log(`  ${url}`);
+  console.log('\nKeep this terminal open to keep the tunnel active. Press Ctrl+C to stop.');
+  console.log('────────────────────────────────────────\n');
+};
+
+const startTunnel = async () => {
+  try {
+    const options = { port };
+    if (process.env.SHARE_SUBDOMAIN) {
+      options.subdomain = process.env.SHARE_SUBDOMAIN;
+    }
+    if (process.env.SHARE_TUNNEL_HOST) {
+      options.host = process.env.SHARE_TUNNEL_HOST;
+    }
+
+    console.log('\nOpening a secure localtunnel session...');
+    tunnel = await localtunnel(options);
+    logShareUrl(tunnel.url);
+
+    tunnel.on('close', () => {
+      if (!shuttingDown) {
+        console.log('\nTunnel closed unexpectedly. Shutting down the server.');
+        shutdown(1);
+      }
+    });
+  } catch (error) {
+    console.error('\nFailed to open a localtunnel session. Make sure you have internet access and try again.');
+    if (error) {
+      console.error(error.message ?? error);
+    }
+    shutdown(1);
+  }
+};
+
+startTunnel();
+
+process.on('SIGINT', () => {
+  shutdown(0);
+});
+
+process.on('SIGTERM', () => {
+  shutdown(0);
+});
 
 nextProcess.on('exit', (code) => {
   console.log(`\nNext.js process exited with code ${code ?? 0}.`);
-  if (!tunnelProcess.killed) {
-    tunnelProcess.kill('SIGINT');
-  }
-  process.exit(code ?? 0);
+  shutdown(code ?? 0);
 });
 
-tunnelProcess.on('exit', (code) => {
-  console.log(`\nSSH tunnel exited with code ${code ?? 0}.`);
-  if (!nextProcess.killed) {
-    nextProcess.kill('SIGINT');
+nextProcess.on('error', (error) => {
+  console.error('\nFailed to launch the Next.js server.');
+  if (error) {
+    console.error(error.message ?? error);
   }
-  process.exit(code ?? 0);
+  shutdown(1);
 });

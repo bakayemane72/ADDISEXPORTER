@@ -91,13 +91,13 @@ Build and run the self-contained image to distribute the app without installing 
 
 ### Share a temporary public link
 
-After building the production bundle (`npm run build`), you can spin up the server and expose it securely via an SSH tunnel powered by [localhost.run](https://localhost.run). The session remains active while the command is running:
+After building the production bundle (`npm run build`), you can spin up the server and expose it securely using [localtunnel](https://github.com/localtunnel/localtunnel). The session remains active while the command is running:
 
 ```bash
 npm run share
 ```
 
-The command prints a shareable URL (for example, `https://polished-impala.l.run.app`). Keep the terminal open to keep the link alive; stop the process with `Ctrl+C` when you no longer want the app to be accessible.
+The command prints a shareable URL (for example, `https://radiant-espresso.loca.lt`). Keep the terminal open to keep the link alive; stop the process with `Ctrl+C` when you no longer want the app to be accessible. Set the optional `SHARE_SUBDOMAIN` environment variable if you want a predictable hostname.
 
 ## Environment notes
 
