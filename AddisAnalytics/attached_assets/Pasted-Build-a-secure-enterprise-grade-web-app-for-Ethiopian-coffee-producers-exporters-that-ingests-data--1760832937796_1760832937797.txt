@@ -1,0 +1,119 @@
+Build a secure, enterprise-grade web app for Ethiopian coffee producers/exporters that ingests data from Excel/CSV uploads or manual entry, validates it, and generates deep analytics dashboards, AI summaries, and export-ready documents. The product must feel like a Fortune 100 platform: clean, fast, reliable, and beautiful.
+
+Core objectives
+
+Data intake
+
+Allow Excel/CSV upload using guided templates; show column-mapping and data validation (types, ranges, required fields).
+
+Manual data entry with autosave and inline validation.
+
+Bulk edit, undo/redo, and import diff preview before commit.
+
+Support Amharic and English; localize number/date formats; store currency in ETB and USD with daily FX snapshot.
+
+Domain model (minimum fields)
+
+Lot: lot_id, harvest_year, region (zone/woreda/kebele), farm/farmer name(s), altitude(m), variety, processing (washed/natural/honey/experimental), moisture(%), screen size, defects, SCA cupping scores (aroma, acidity, body, aftertaste, uniformity, overall), certifications, photos/docs.
+
+Commercials: farmgate_price (ETB/kg), FOB(USD/lb), costs (processing, milling, transport), sale_price, contracted_qty (bags/kg), shipped_qty, buyer/roaster, incoterms.
+
+Logistics: mill, warehouse, bag type (jute + liner), seal IDs, container#, bill of lading, vessel/ETD/ETA, port, shipment milestones.
+
+Compliance: CoA, ICO marks, phytosanitary, invoices, packing list, export permit refs.
+
+Traceability: QR code per lot/batch with public landing page.
+
+Analytics & AI
+
+Dashboards:
+
+Quality: cupping trend by lot/region/processing; moisture vs. score; defect heatmaps.
+
+Inventory: by status (samples, milled, ready-to-ship, in-transit, landed), warehouse aging, available vs. committed.
+
+Commercial: cost stack per lot, realized margin per lb/kg, FX impact, pricing waterfall (farmgate→FOB→sold).
+
+Operations: lead times (harvest→milling→export), OTIF, document completeness score.
+
+AI copilots:
+
+“Summarize my season” (performance vs. last harvest, standout lots, risks, recommendations).
+
+“Pricing coach” (suggest min/target prices from costs, quality, and benchmark lots).
+
+“Read my spreadsheet” (auto-insights after upload: outliers, missing data, alerts).
+
+“Buyer brief” generator: one-pager per lot with tasting notes, story, photos, and QR.
+
+Export charts/reports to PDF/PowerPoint; shareable links with access controls.
+
+Traceability & sharing
+
+Generate QR codes for each lot/batch linking to a branded micro-site showing farm/region, altitude, process, photos, cupping, and transparency data (farmgate, FOB bands), with optional producer message and contact CTA.
+
+Public pages cache and load fast, mobile-first, with privacy toggles for sensitive fields.
+
+Workflow & docs
+
+Sample pipeline: send/track samples, feedback, approvals, and cupping notes per buyer.
+
+Document center: create/export invoices, packing lists, CoA, ICO docs; store scans; versioning + audit log.
+
+Shipment tracker: timeline view with milestone alerts (ready, loaded, sailed, landed, released).
+
+Architecture & security
+
+Role-based access control (Owner, Manager, QC, Clerk, Viewer), MFA/SSO (OAuth/OIDC), audit logs on all changes.
+
+Encrypt data at rest/in transit, daily backups, row-level permission for multi-coop setups.
+
+Offline-first PWA for low-connectivity sites; queue/sync when online.
+
+API endpoints for future marketplace/warehouse integrations.
+
+UX/UI design (Fortune-100 feel)
+
+Design system: responsive grid, 8-pt spacing, semantic theming, accessible components (WCAG 2.1 AA).
+
+Navigation: left rail + sticky global search; contextual breadcrumbs; command-K palette.
+
+Data views: pivot tables with grouping, column pinning, saved views; sparkline trend cells.
+
+Visuals: clean typography, generous white space, micro-interactions (subtle motion), empty-state education.
+
+Brand layer: premium minimalism; neutral base, restrained accent; high-contrast dark mode.
+
+Performance: instant search, optimistic UI, skeleton loaders, <200ms interactions on common paths.
+
+Integrations (phaseable)
+
+Import/export Excel/CSV templates; webhook and REST API for ERPs/warehouses.
+
+Optional marketplace connector to publish offers/lots and receive inquiries.
+
+Verification data fields for sustainability/traceability standards; attach certificates and survey results.
+
+Success metrics
+
+Time to usable dashboard after upload < 60 seconds.
+
+Data validation coverage ≥ 95% of required fields.
+
+Report generation < 5 seconds for 10k rows.
+
+Uptime ≥ 99.9%, P75 interaction ≤ 200ms on 3G.
+
+Deliverables
+
+Fully working web app (responsive, PWA) + admin console.
+
+Excel templates, sample data, and guided import wizard.
+
+Default dashboards and AI prompts (as above).
+
+Branded QR micro-site templates.
+
+PDF/PowerPoint export themes.
+
+Documentation and onboarding checklists (Amharic/English).
