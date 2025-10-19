@@ -12,7 +12,8 @@ export function AIChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your AI assistant. Ask me anything about your imported coffee data - quality metrics, shipments, trends, or specific insights.",
+      content:
+        "I'm the Addis enterprise analyst. I can surface trends, shipment telemetry, and commercial signals directly from your ingested datasets—no external API keys required.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -49,7 +50,10 @@ export function AIChat() {
     } catch (error: any) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `Failed to get response: ${error.message}` },
+        {
+          role: "assistant",
+          content: `I couldn't reach the analytics engine: ${error.message}`,
+        },
       ]);
     } finally {
       setLoading(false);
@@ -58,20 +62,18 @@ export function AIChat() {
 
   return (
     <div className="flex flex-col h-full bg-bg-card rounded-card border border-border shadow-default">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-accent-gold/10 rounded-full flex items-center justify-center">
             <Bot className="w-5 h-5 text-accent-gold" />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-text-primary">AI Data Assistant</h3>
-            <p className="text-xs text-text-muted">Ask questions about your data</p>
+            <h3 className="text-sm font-medium text-text-primary">AI Data Strategist</h3>
+            <p className="text-xs text-text-muted">Ask about volume, quality, regions, or shipment status.</p>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, idx) => (
           <div
@@ -84,13 +86,13 @@ export function AIChat() {
               </div>
             )}
             <div
-              className={`max-w-[80%] rounded-card p-3 ${
+              className={`max-w-[80%] rounded-card p-3 whitespace-pre-wrap text-sm ${
                 msg.role === "user"
                   ? "bg-accent-gold text-bg-base"
                   : "bg-bg-surface text-text-primary"
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              {msg.content}
             </div>
             {msg.role === "user" && (
               <div className="w-8 h-8 bg-accent-copper/10 rounded-full flex items-center justify-center flex-shrink-0">
@@ -105,21 +107,25 @@ export function AIChat() {
               <Bot className="w-4 h-4 text-accent-gold animate-pulse" />
             </div>
             <div className="bg-bg-surface text-text-muted rounded-card p-3">
-              <p className="text-sm">Thinking...</p>
+              <p className="text-sm">Analysing your portfolio…</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input */}
       <div className="p-4 border-t border-border">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask about your coffee data..."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="e.g., Top regions by volume or shipment status breakdown"
             className="flex-1 input-field"
             disabled={loading}
           />
@@ -132,7 +138,7 @@ export function AIChat() {
           </button>
         </div>
         <p className="text-xs text-text-muted mt-2">
-          Try: "What's the average quality score?" or "Show me shipments by region"
+          Suggestions: "Average score this season", "Total FOB value", "Shipments in transit"
         </p>
       </div>
     </div>

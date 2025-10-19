@@ -1,30 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { prisma, isSchemaOutOfSyncError } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const shipments = await prisma.shipment.findMany({
       include: {
         coffeeRow: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
     return NextResponse.json(shipments);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (isSchemaOutOfSyncError(error)) {
+      console.warn("Database schema not initialised yet; returning empty shipment list.");
+      return NextResponse.json([]);
+    }
+
     console.error("Error fetching shipments:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch shipments" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch shipments" }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
@@ -47,7 +47,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get org
     let org = await prisma.org.findFirst();
     if (!org) {
       org = await prisma.org.create({
@@ -76,11 +75,19 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(shipment);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (isSchemaOutOfSyncError(error)) {
+      console.warn("Database schema not initialised yet; rejecting shipment creation.");
+      return NextResponse.json(
+        {
+          error:
+            "Database is not initialised. Run `npx prisma db push` to create the schema before adding shipments.",
+        },
+        { status: 503 }
+      );
+    }
+
     console.error("Error creating shipment:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to create shipment" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create shipment" }, { status: 500 });
   }
 }

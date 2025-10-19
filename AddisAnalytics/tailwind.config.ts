@@ -1,5 +1,14 @@
 import type { Config } from "tailwindcss";
 
+const corporateStack = [
+  "\"IBM Plex Sans\"",
+  "\"Segoe UI\"",
+  "\"Helvetica Neue\"",
+  "system-ui",
+  "-apple-system",
+  "sans-serif",
+];
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -18,25 +27,27 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          base: "#0B0F14",
-          surface: "#0F141A",
-          card: "#141A21",
+          base: "#05080C",
+          surface: "#0C1118",
+          card: "#111824",
         },
         text: {
-          primary: "#E6EBF2",
-          muted: "#9AA7B2",
+          primary: "#F4F7FB",
+          muted: "#98A3B1",
         },
         accent: {
           gold: "#D9A441",
           copper: "#B86A3C",
+          blue: "#2C7BE5",
         },
         border: {
-          DEFAULT: "#22303C",
-          alt: "#2B3945",
+          DEFAULT: "#1D2733",
+          alt: "#25313F",
         },
-        success: "#38B682",
+        success: "#3DBE8B",
         warning: "#E9B949",
         error: "#E05252",
+        info: "#4F9BFF",
       },
       borderRadius: {
         card: "16px",
@@ -44,11 +55,14 @@ const config: Config = {
         pill: "9999px",
       },
       boxShadow: {
-        default: "0 2px 12px rgba(0,0,0,.35)",
-        hover: "0 6px 24px rgba(0,0,0,.45)",
+        default: "0 4px 24px rgba(4, 10, 22, 0.45)",
+        hover: "0 12px 40px rgba(4, 10, 22, 0.55)",
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: corporateStack,
+        heading: corporateStack,
+        display: corporateStack,
+        body: corporateStack,
       },
       fontWeight: {
         display: "800",
@@ -75,11 +89,16 @@ const config: Config = {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "pulse-border": {
+          "0%": { boxShadow: "0 0 0 0 rgba(217, 164, 65, 0.4)" },
+          "100%": { boxShadow: "0 0 0 12px rgba(217, 164, 65, 0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.18s ease-out",
+        "pulse-border": "pulse-border 2.5s infinite",
       },
       transitionDuration: {
         page: "220ms",
