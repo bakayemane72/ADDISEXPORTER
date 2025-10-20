@@ -138,7 +138,7 @@ export function AIChat() {
           </button>
         </div>
         <p className="text-xs text-text-muted mt-2">
-          Suggestions: "Average score this season", "Total FOB value", "Shipments in transit"
+          Suggestions: “Average score this season”, “Total FOB value”, “Shipments in transit”
         </p>
       </div>
     </div>
