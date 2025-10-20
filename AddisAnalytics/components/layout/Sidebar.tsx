@@ -22,7 +22,7 @@ type NavItem =
       };
     };
 
-const navItems: NavItem[] = [
+const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
   {
     label: "Lots",
@@ -37,7 +37,12 @@ const navItems: NavItem[] = [
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
   { icon: Settings, label: "Settings", href: "/settings" }
-];
+ ] satisfies readonly NavItem[];
+
+const hasImage = (
+  item: NavItem
+): item is Extract<NavItem, { image: { src: string; alt: string; priority?: boolean } }> =>
+  "image" in item;
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -61,8 +66,6 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex flex-col gap-4">
         {navItems.map((item) => {
-          const isImageItem = "image" in item;
-          const Icon = !isImageItem ? item.icon : null;
           const isActive = pathname === item.href;
 
           return (
@@ -76,7 +79,7 @@ export function Sidebar() {
               }`}
               title={item.label}
             >
-              {isImageItem ? (
+              {hasImage(item) ? (
                 <span className="relative block h-6 w-6">
                   <Image
                     src={item.image.src}
@@ -88,7 +91,10 @@ export function Sidebar() {
                   />
                 </span>
               ) : (
-                Icon && <Icon className="w-5 h-5" />
+                (() => {
+                  const Icon = item.icon;
+                  return Icon ? <Icon className="w-5 h-5" /> : null;
+                })()
               )}
 
               {/* Tooltip */}

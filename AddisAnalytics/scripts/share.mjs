@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 
 const port = Number(process.env.PORT ?? 3000);
+const isWindows = process.platform === 'win32';
+const npxCommand = isWindows ? 'npx.cmd' : 'npx';
+const npmCommand = isWindows ? 'npm.cmd' : 'npm';
 const cwd = process.cwd();
 const buildDir = path.join(cwd, '.next');
 
@@ -96,10 +99,10 @@ const startTunnel = async () => {
     tunnelArgs.push('--host', process.env.SHARE_TUNNEL_HOST);
   }
 
-  tunnelProcess = spawn('npx', tunnelArgs, {
+  tunnelProcess = spawn(npxCommand, tunnelArgs, {
     cwd,
     env: nextEnv,
-    shell: process.platform === 'win32',
+    shell: false,
     stdio: ['inherit', 'pipe', 'pipe'],
   });
 
@@ -140,7 +143,7 @@ const runCommand = (command, args, options) =>
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       ...options,
-      shell: process.platform === 'win32',
+      shell: false,
     });
 
     child.on('exit', (code) => {
@@ -171,7 +174,7 @@ const ensureDatabase = async () => {
   }
 
   try {
-    await runCommand('npx', prismaArgs, {
+    await runCommand(npxCommand, prismaArgs, {
       cwd,
       env: nextEnv,
       stdio: 'inherit',
@@ -186,11 +189,11 @@ const ensureDatabase = async () => {
 };
 
 const startNextServer = () => {
-  nextProcess = spawn('npm', ['run', 'start'], {
+  nextProcess = spawn(npmCommand, ['run', 'start'], {
     cwd,
     env: nextEnv,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: false,
   });
 
   nextProcess.on('exit', (code) => {
