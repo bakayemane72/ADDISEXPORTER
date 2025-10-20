@@ -4,35 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  type LucideIcon,
   LayoutDashboard,
+  Coffee,
   Ship,
   BarChart3,
   FileText,
   Settings
 } from "lucide-react";
 
-type NavItem = {
-  label: string;
-  href: string;
-  icon?: LucideIcon;
-  image?: {
-    src: string;
-    alt: string;
-    priority?: boolean;
-  };
-};
-
-const navItems: NavItem[] = [
+const navItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
-  {
-    label: "Lots",
-    href: "/lots",
-    image: {
-      src: "/addis-exporter-logo.svg",
-      alt: "Addis Exporter emblem"
-    }
-  },
+  { icon: Coffee, label: "Lots", href: "/lots" },
   { icon: Ship, label: "Shipments", href: "/shipments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
@@ -60,7 +42,6 @@ export function Sidebar() {
       <nav className="flex flex-col gap-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const image = item.image;
           const isActive = pathname === item.href;
 
           return (
@@ -77,14 +58,14 @@ export function Sidebar() {
               `}
               title={item.label}
             >
-              {image ? (
+              {item.label === "Lots" ? (
                 <Image
-                  src={image.src}
-                  alt={image.alt}
+                  src="/addis-exporter-logo.svg"
+                  alt="Addis Exporter logo"
                   width={20}
                   height={20}
                   className="h-5 w-5 object-contain"
-                  priority={image.priority}
+                  priority
                 />
               ) : (
                 Icon && <Icon className="w-5 h-5" />
