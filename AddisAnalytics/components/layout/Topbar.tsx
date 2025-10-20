@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, Bell, User, Globe, Upload } from "lucide-react";
+import Link from "next/link";
+import { Bell, User, Globe, Upload } from "lucide-react";
 import { useState } from "react";
 import { ImportModal } from "@/components/modals/ImportModal";
 
@@ -11,9 +12,13 @@ export function Topbar() {
   return (
     <header className="h-12 bg-bg-surface border-b border-border flex items-center justify-between px-6">
       {/* Brand */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold text-text-primary">ADDIS Exports Analytics</h1>
-      </div>
+      <Link
+        href="/"
+        className="text-lg font-semibold text-text-primary transition-colors hover:text-text-primary/80"
+        aria-label="Go to Addis Exporter Analytics overview"
+      >
+        ADDIS Exporter Analytics
+      </Link>
 
       {/* Actions */}
       <div className="flex items-center gap-4">
