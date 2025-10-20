@@ -14,6 +14,12 @@ if (!fs.existsSync(buildDir)) {
 
 const nextEnv = { ...process.env, PORT: String(port) };
 let nextProcess;
+const nextProcess = spawn('npm', ['run', 'start'], {
+  cwd,
+  env: nextEnv,
+  stdio: 'inherit',
+  shell: process.platform === 'win32',
+});
 
 let tunnelProcess;
 let tunnelUrl;
@@ -49,6 +55,7 @@ const closeTunnel = async () => {
 
 const stopNext = () => {
   if (!nextProcess || nextProcess.exitCode !== null) return;
+  if (nextProcess.exitCode !== null) return;
 
   try {
     process.kill(nextProcess.pid, 'SIGINT');
@@ -58,6 +65,7 @@ const stopNext = () => {
 
   setTimeout(() => {
     if (nextProcess && nextProcess.exitCode === null) {
+    if (nextProcess.exitCode === null) {
       try {
         process.kill(nextProcess.pid, 'SIGTERM');
       } catch {
@@ -214,6 +222,7 @@ const bootstrap = async () => {
 };
 
 bootstrap();
+startTunnel();
 
 process.on('SIGINT', () => {
   shutdown(0);
@@ -221,4 +230,17 @@ process.on('SIGINT', () => {
 
 process.on('SIGTERM', () => {
   shutdown(0);
+});
+
+nextProcess.on('exit', (code) => {
+  console.log(`\nNext.js process exited with code ${code ?? 0}.`);
+  shutdown(code ?? 0);
+});
+
+nextProcess.on('error', (error) => {
+  console.error('\nFailed to launch the Next.js server.');
+  if (error) {
+    console.error(error.message ?? error);
+  }
+  shutdown(1);
 });

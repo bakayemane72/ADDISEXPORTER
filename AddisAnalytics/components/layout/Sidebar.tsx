@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  type LucideIcon,
   LayoutDashboard,
   Ship,
   BarChart3,
@@ -27,6 +28,19 @@ type NavItem =
         priority?: boolean;
       };
     };
+  Settings
+} from "lucide-react";
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  image?: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+  };
+};
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
@@ -37,6 +51,7 @@ const navItems: NavItem[] = [
       src: "/addis-exporter-logo.svg",
       alt: "Addis Exporter logo",
       priority: true
+      alt: "Addis Exporter emblem"
     }
   },
   { icon: Ship, label: "Shipments", href: "/shipments" },
@@ -62,6 +77,13 @@ export function Sidebar() {
             priority
           />
         </span>
+        <Image
+          src="/addis-exporter-logo.svg"
+          alt="Addis Exporter logo"
+          width={28}
+          height={28}
+          priority
+        />
       </div>
 
       {/* Navigation */}
@@ -69,6 +91,8 @@ export function Sidebar() {
         {navItems.map((item) => {
           const isImageItem = "image" in item;
           const Icon = !isImageItem ? item.icon : null;
+          const Icon = item.icon;
+          const image = item.image;
           const isActive = pathname === item.href;
 
           return (
@@ -97,6 +121,19 @@ export function Sidebar() {
                 Icon && <Icon className="w-5 h-5" />
               )}
 
+              {image ? (
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={20}
+                  height={20}
+                  className="h-5 w-5"
+                  priority={image.priority}
+                />
+              ) : (
+                Icon && <Icon className="w-5 h-5" />
+              )}
+              
               {/* Tooltip */}
               <span className="absolute left-full ml-4 px-3 py-2 bg-bg-card border border-border rounded-input text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
                 {item.label}
