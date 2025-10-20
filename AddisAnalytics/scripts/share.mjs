@@ -13,6 +13,7 @@ if (!fs.existsSync(buildDir)) {
 }
 
 const nextEnv = { ...process.env, PORT: String(port) };
+let nextProcess;
 const nextProcess = spawn('npm', ['run', 'start'], {
   cwd,
   env: nextEnv,
@@ -53,6 +54,7 @@ const closeTunnel = async () => {
 };
 
 const stopNext = () => {
+  if (!nextProcess || nextProcess.exitCode !== null) return;
   if (nextProcess.exitCode !== null) return;
 
   try {
@@ -62,6 +64,7 @@ const stopNext = () => {
   }
 
   setTimeout(() => {
+    if (nextProcess && nextProcess.exitCode === null) {
     if (nextProcess.exitCode === null) {
       try {
         process.kill(nextProcess.pid, 'SIGTERM');
@@ -141,6 +144,84 @@ const startTunnel = async () => {
   });
 };
 
+const runCommand = (command, args, options) =>
+  new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      ...options,
+      shell: process.platform === 'win32',
+    });
+
+    child.on('exit', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`${command} ${args.join(' ')} exited with code ${code ?? 0}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+  });
+
+const ensureDatabase = async () => {
+  console.log('\nSynchronizing the Prisma schema (npx prisma db push)...');
+
+  const prismaArgs = ['prisma', 'db', 'push', '--skip-generate'];
+  const acceptDataLoss = process.env.SHARE_ACCEPT_DATA_LOSS !== 'false';
+
+  if (acceptDataLoss) {
+    prismaArgs.push('--accept-data-loss');
+    console.warn(
+      '\nPassing --accept-data-loss to ensure Prisma can update the schema without interactive prompts.\n' +
+        'Set SHARE_ACCEPT_DATA_LOSS=false before running npm run share if you prefer to review warnings manually.'
+    );
+  }
+
+  try {
+    await runCommand('npx', prismaArgs, {
+      cwd,
+      env: nextEnv,
+      stdio: 'inherit',
+    });
+  } catch (error) {
+    console.error('\nFailed to synchronize the database schema.');
+    if (error) {
+      console.error(error.message ?? error);
+    }
+    process.exit(1);
+  }
+};
+
+const startNextServer = () => {
+  nextProcess = spawn('npm', ['run', 'start'], {
+    cwd,
+    env: nextEnv,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  });
+
+  nextProcess.on('exit', (code) => {
+    console.log(`\nNext.js process exited with code ${code ?? 0}.`);
+    shutdown(code ?? 0);
+  });
+
+  nextProcess.on('error', (error) => {
+    console.error('\nFailed to launch the Next.js server.');
+    if (error) {
+      console.error(error.message ?? error);
+    }
+    shutdown(1);
+  });
+};
+
+const bootstrap = async () => {
+  await ensureDatabase();
+  startNextServer();
+  await startTunnel();
+};
+
+bootstrap();
 startTunnel();
 
 process.on('SIGINT', () => {
