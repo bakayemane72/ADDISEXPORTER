@@ -7,6 +7,12 @@ const port = Number(process.env.PORT ?? 3000);
 const isWindows = process.platform === 'win32';
 const npxCommand = isWindows ? 'npx.cmd' : 'npx';
 const npmCommand = isWindows ? 'npm.cmd' : 'npm';
+const localTunnelBinPath = path.join(
+  cwd,
+  'node_modules',
+  '.bin',
+  isWindows ? 'localtunnel.cmd' : 'localtunnel'
+);
 const cwd = process.cwd();
 const buildDir = path.join(cwd, '.next');
 
@@ -17,6 +23,8 @@ let tunnelProcess;
 let tunnelUrl;
 let tunnelReady = false;
 let shuttingDown = false;
+let tunnelCommand = npxCommand;
+let tunnelBaseArgs = ['localtunnel'];
 
 const closeTunnel = async () => {
   if (!tunnelProcess || tunnelProcess.exitCode !== null) return;
@@ -85,9 +93,10 @@ const logShareUrl = (url) => {
 };
 
 const startTunnel = async () => {
-  console.log('\nOpening a secure localtunnel session with npx...');
+  const tunnelSource = tunnelCommand === npxCommand ? 'npx' : 'the installed localtunnel binary';
+  console.log(`\nOpening a secure localtunnel session with ${tunnelSource}...`);
 
-  const tunnelArgs = ['localtunnel', '--port', String(port)];
+  const tunnelArgs = [...tunnelBaseArgs, '--port', String(port)];
   if (process.env.SHARE_SUBDOMAIN) {
     tunnelArgs.push('--subdomain', process.env.SHARE_SUBDOMAIN);
   }
@@ -95,7 +104,7 @@ const startTunnel = async () => {
     tunnelArgs.push('--host', process.env.SHARE_TUNNEL_HOST);
   }
 
-  tunnelProcess = spawn(npxCommand, tunnelArgs, {
+  tunnelProcess = spawn(tunnelCommand, tunnelArgs, {
     cwd,
     env: nextEnv,
     shell: false,
@@ -176,6 +185,52 @@ const runCommand = (command, args, options) =>
     });
   });
 
+const configureTunnelCommand = () => {
+  if (fs.existsSync(localTunnelBinPath)) {
+    tunnelCommand = localTunnelBinPath;
+    tunnelBaseArgs = [];
+    return true;
+  }
+
+  tunnelCommand = npxCommand;
+  tunnelBaseArgs = ['localtunnel'];
+  return false;
+};
+
+const ensureLocaltunnel = async () => {
+  const hasLocalBinary = configureTunnelCommand();
+  if (hasLocalBinary) {
+    return;
+  }
+
+  const allowNpxDownload = process.env.SHARE_ALLOW_NPX_DOWNLOAD === 'true';
+  if (!allowNpxDownload) {
+    console.error(
+      '\nlocaltunnel is not installed in node_modules/. Install it first with "npm install localtunnel" or rerun with SHARE_ALLOW_NPX_DOWNLOAD=true to allow an npx download.'
+    );
+    process.exit(1);
+  }
+
+  console.log('\nPreparing to download the localtunnel CLI with npx...');
+
+  try {
+    await runCommand(tunnelCommand, [...tunnelBaseArgs, '--help'], {
+      cwd,
+      env: nextEnv,
+      stdio: 'ignore',
+    });
+  } catch (error) {
+    console.error('\nFailed to download the localtunnel CLI via npx.');
+    if (error) {
+      console.error(error.message ?? error);
+    }
+    console.error(
+      '\nInstall localtunnel locally with "npm install localtunnel" or ensure registry access, then rerun npm run share.'
+    );
+    process.exit(1);
+  }
+};
+
 const ensureBuild = async () => {
   if (fs.existsSync(buildDir)) {
     return;
@@ -250,6 +305,7 @@ const startNextServer = () => {
 };
 
 const bootstrap = async () => {
+  await ensureLocaltunnel();
   await ensureBuild();
   await ensureDatabase();
   startNextServer();

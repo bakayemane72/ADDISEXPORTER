@@ -95,15 +95,17 @@ Follow these steps to generate a link you can send to stakeholders:
 
 1. (Optional) Run `npm run build` if you want to precompile the production bundle yourself. Otherwise, the sharing script will perform this step the first time you invoke it.
 
-2. From the `AddisAnalytics` directory, start the sharing workflow. The script ensures a production build exists, synchronizes the SQLite schema with `npx prisma db push`, then launches the production server and opens a tunnel via [`npx localtunnel`](https://github.com/localtunnel/localtunnel), so no global installs are required. The sync runs with `--accept-data-loss` by default to avoid interactive prompts; set `SHARE_ACCEPT_DATA_LOSS=false` beforehand if you prefer to review Prisma warnings manually.
+2. Install the LocalTunnel CLI locally (`npm install --save-dev localtunnel`) or opt into an on-demand download by exporting `SHARE_ALLOW_NPX_DOWNLOAD=true` before running the script. This avoids surprises in locked-down environments where `npx` cannot reach the npm registry.
+
+3. From the `AddisAnalytics` directory, start the sharing workflow. The script ensures a production build exists, synchronizes the SQLite schema with `npx prisma db push`, then launches the production server and opens a tunnel via [`localtunnel`](https://github.com/localtunnel/localtunnel). The sync runs with `--accept-data-loss` by default to avoid interactive prompts; set `SHARE_ACCEPT_DATA_LOSS=false` beforehand if you prefer to review Prisma warnings manually.
 
    ```bash
    npm run share
    ```
 
-3. Wait for the terminal to print a URL similar to `https://radiant-espresso.loca.lt`. This is the public link you can share. Leave the command running to keep the tunnel and server alive.
+4. Wait for the terminal to print a URL similar to `https://radiant-espresso.loca.lt`. This is the public link you can share. Leave the command running to keep the tunnel and server alive.
 
-4. When you are finished sharing access, press `Ctrl+C` to shut down both the tunnel and the Next.js server.
+5. When you are finished sharing access, press `Ctrl+C` to shut down both the tunnel and the Next.js server.
 
    - Optional: set `SHARE_SUBDOMAIN=my-demo` before running the script if you want a predictable subdomain (subject to availability).
    - Optional: set `SHARE_TUNNEL_HOST=https://<your-localtunnel-host>` to use a self-hosted LocalTunnel relay instead of the default `loca.lt` service.
