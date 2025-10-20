@@ -36,6 +36,82 @@ Addis Enterprise Analytics consolidates ingestion, interactive dashboards, shipm
 
    Visit `http://localhost:3000` to explore the dashboards, upload flows, and AI agent.
 
+## Production deployment
+
+Whether you share the analytics workspace with a stakeholder or host it for a team, deploy the compiled Next.js app instead of the development server.
+
+### Manual Node.js host
+
+1. Build the production bundle (this automatically runs `prisma generate`):
+
+   ```bash
+   cd AddisAnalytics
+   npm install
+   npm run build
+   ```
+
+2. Apply the Prisma schema and, optionally, seed demo data. The SQLite database is created automatically at `prisma/dev.db`; store this file on persistent storage so data survives restarts.
+
+   ```bash
+   npx prisma db push
+   # Optional: populate with demo content
+   npm run prisma:seed
+   ```
+
+3. Launch the production server on your target host (defaults to port `3000`, override with the `PORT` env var as needed):
+
+   ```bash
+   npm run start
+   ```
+
+### Docker container
+
+Build and run the self-contained image to distribute the app without installing Node.js on the host.
+
+1. Build the container image:
+
+   ```bash
+   docker build -t addis-analytics-prod ./AddisAnalytics
+   ```
+
+2. Start the container, mounting a volume to persist the SQLite database. Set `SEED_DB=true` the first time you run it if you want the sample data.
+
+   ```bash
+   docker run -d \
+     -p 3000:3000 \
+     -v addis-data:/app/prisma \
+     -e SEED_DB=true \
+     --name addis-analytics \
+     addis-analytics-prod
+   ```
+
+   Subsequent restarts can omit `SEED_DB=true`. The entrypoint automatically applies Prisma migrations on boot.
+
+3. Visit `http://localhost:3000` (or the mapped host/port) to access the production UI.
+
+### Share a temporary public link
+
+Follow these steps to generate a link you can send to stakeholders:
+
+1. Build the production bundle so the optimized assets and Prisma client are ready. You only need to do this once per code change.
+
+   ```bash
+   npm run build
+   ```
+
+2. From the `AddisAnalytics` directory, start the sharing workflow. The script first synchronizes the SQLite schema with `npx prisma db push`, then launches the production server and opens a tunnel via [`npx localtunnel`](https://github.com/localtunnel/localtunnel), so no global installs are required. The sync runs with `--accept-data-loss` by default to avoid interactive prompts; set `SHARE_ACCEPT_DATA_LOSS=false` beforehand if you prefer to review Prisma warnings manually.
+
+   ```bash
+   npm run share
+   ```
+
+3. Wait for the terminal to print a URL similar to `https://radiant-espresso.loca.lt`. This is the public link you can share. Leave the command running to keep the tunnel and server alive.
+
+4. When you are finished sharing access, press `Ctrl+C` to shut down both the tunnel and the Next.js server.
+
+   - Optional: set `SHARE_SUBDOMAIN=my-demo` before running the script if you want a predictable subdomain (subject to availability).
+   - Optional: set `SHARE_TUNNEL_HOST=https://<your-localtunnel-host>` to use a self-hosted LocalTunnel relay instead of the default `loca.lt` service.
+
 ## Environment notes
 
 - The AI assistant runs locally—no `OPENAI_API_KEY` is required. It analyses the ingested dataset using deterministic heuristics.

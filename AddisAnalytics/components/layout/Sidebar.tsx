@@ -1,19 +1,38 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Coffee, 
-  Ship, 
-  BarChart3, 
-  FileText, 
-  Settings 
+import {
+  type LucideIcon,
+  LayoutDashboard,
+  Ship,
+  BarChart3,
+  FileText,
+  Settings
 } from "lucide-react";
 
-const navItems = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  image?: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+  };
+};
+
+const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
-  { icon: Coffee, label: "Lots", href: "/lots" },
+  {
+    label: "Lots",
+    href: "/lots",
+    image: {
+      src: "/addis-exporter-logo.svg",
+      alt: "Addis Exporter emblem"
+    }
+  },
   { icon: Ship, label: "Shipments", href: "/shipments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
@@ -27,15 +46,23 @@ export function Sidebar() {
     <aside className="w-20 bg-bg-surface border-r border-border flex flex-col items-center py-6 gap-8">
       {/* Logo */}
       <div className="w-10 h-10 bg-gradient-to-br from-accent-gold to-accent-copper rounded-xl flex items-center justify-center">
-        <Coffee className="w-6 h-6 text-bg-base" />
+        <Image
+          src="/addis-exporter-logo.svg"
+          alt="Addis Exporter logo"
+          width={28}
+          height={28}
+          className="h-7 w-7 object-contain"
+          priority
+        />
       </div>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-4">
         {navItems.map((item) => {
           const Icon = item.icon;
+          const image = item.image;
           const isActive = pathname === item.href;
-          
+
           return (
             <Link
               key={item.href}
@@ -50,7 +77,18 @@ export function Sidebar() {
               `}
               title={item.label}
             >
-              <Icon className="w-5 h-5" />
+              {image ? (
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                  priority={image.priority}
+                />
+              ) : (
+                Icon && <Icon className="w-5 h-5" />
+              )}
               
               {/* Tooltip */}
               <span className="absolute left-full ml-4 px-3 py-2 bg-bg-card border border-border rounded-input text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
