@@ -4,6 +4,9 @@ import fs from 'fs';
 import path from 'path';
 
 const port = Number(process.env.PORT ?? 3000);
+const isWindows = process.platform === 'win32';
+const npxCommand = isWindows ? 'npx.cmd' : 'npx';
+const npmCommand = isWindows ? 'npm.cmd' : 'npm';
 const cwd = process.cwd();
 const buildDir = path.join(cwd, '.next');
 
@@ -14,12 +17,6 @@ if (!fs.existsSync(buildDir)) {
 
 const nextEnv = { ...process.env, PORT: String(port) };
 let nextProcess;
-const nextProcess = spawn('npm', ['run', 'start'], {
-  cwd,
-  env: nextEnv,
-  stdio: 'inherit',
-  shell: process.platform === 'win32',
-});
 
 let tunnelProcess;
 let tunnelUrl;
@@ -55,7 +52,6 @@ const closeTunnel = async () => {
 
 const stopNext = () => {
   if (!nextProcess || nextProcess.exitCode !== null) return;
-  if (nextProcess.exitCode !== null) return;
 
   try {
     process.kill(nextProcess.pid, 'SIGINT');
@@ -65,7 +61,6 @@ const stopNext = () => {
 
   setTimeout(() => {
     if (nextProcess && nextProcess.exitCode === null) {
-    if (nextProcess.exitCode === null) {
       try {
         process.kill(nextProcess.pid, 'SIGTERM');
       } catch {
@@ -104,10 +99,10 @@ const startTunnel = async () => {
     tunnelArgs.push('--host', process.env.SHARE_TUNNEL_HOST);
   }
 
-  tunnelProcess = spawn('npx', tunnelArgs, {
+  tunnelProcess = spawn(npxCommand, tunnelArgs, {
     cwd,
     env: nextEnv,
-    shell: process.platform === 'win32',
+    shell: false,
     stdio: ['inherit', 'pipe', 'pipe'],
   });
 
@@ -148,7 +143,7 @@ const runCommand = (command, args, options) =>
   new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       ...options,
-      shell: process.platform === 'win32',
+      shell: false,
     });
 
     child.on('exit', (code) => {
@@ -179,7 +174,7 @@ const ensureDatabase = async () => {
   }
 
   try {
-    await runCommand('npx', prismaArgs, {
+    await runCommand(npxCommand, prismaArgs, {
       cwd,
       env: nextEnv,
       stdio: 'inherit',
@@ -194,11 +189,11 @@ const ensureDatabase = async () => {
 };
 
 const startNextServer = () => {
-  nextProcess = spawn('npm', ['run', 'start'], {
+  nextProcess = spawn(npmCommand, ['run', 'start'], {
     cwd,
     env: nextEnv,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: false,
   });
 
   nextProcess.on('exit', (code) => {
@@ -222,7 +217,6 @@ const bootstrap = async () => {
 };
 
 bootstrap();
-startTunnel();
 
 process.on('SIGINT', () => {
   shutdown(0);
@@ -230,17 +224,4 @@ process.on('SIGINT', () => {
 
 process.on('SIGTERM', () => {
   shutdown(0);
-});
-
-nextProcess.on('exit', (code) => {
-  console.log(`\nNext.js process exited with code ${code ?? 0}.`);
-  shutdown(code ?? 0);
-});
-
-nextProcess.on('error', (error) => {
-  console.error('\nFailed to launch the Next.js server.');
-  if (error) {
-    console.error(error.message ?? error);
-  }
-  shutdown(1);
 });

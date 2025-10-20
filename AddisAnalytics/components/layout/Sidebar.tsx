@@ -3,15 +3,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  type LucideIcon,
-  LayoutDashboard,
-  Ship,
-  BarChart3,
-  FileText,
-  Settings,
-  type LucideIcon
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { LayoutDashboard, Ship, BarChart3, FileText, Settings } from "lucide-react";
+
+type NavItem =
+  | {
+      label: string;
+      href: string;
+      icon: LucideIcon;
+    }
+  | {
+      label: string;
+      href: string;
+      image: {
+        src: string;
+        alt: string;
+        priority?: boolean;
+      };
+    };
 
 type NavItem =
   | {
@@ -51,14 +60,18 @@ const navItems: NavItem[] = [
       src: "/addis-exporter-logo.svg",
       alt: "Addis Exporter logo",
       priority: true
-      alt: "Addis Exporter emblem"
     }
   },
   { icon: Ship, label: "Shipments", href: "/shipments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
   { icon: Settings, label: "Settings", href: "/settings" }
-];
+ ] satisfies readonly NavItem[];
+
+const hasImage = (
+  item: NavItem
+): item is Extract<NavItem, { image: { src: string; alt: string; priority?: boolean } }> =>
+  "image" in item;
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -77,22 +90,11 @@ export function Sidebar() {
             priority
           />
         </span>
-        <Image
-          src="/addis-exporter-logo.svg"
-          alt="Addis Exporter logo"
-          width={28}
-          height={28}
-          priority
-        />
       </div>
 
       {/* Navigation */}
       <nav className="flex flex-col gap-4">
         {navItems.map((item) => {
-          const isImageItem = "image" in item;
-          const Icon = !isImageItem ? item.icon : null;
-          const Icon = item.icon;
-          const image = item.image;
           const isActive = pathname === item.href;
 
           return (
@@ -106,7 +108,7 @@ export function Sidebar() {
               }`}
               title={item.label}
             >
-              {isImageItem ? (
+              {hasImage(item) ? (
                 <span className="relative block h-6 w-6">
                   <Image
                     src={item.image.src}
@@ -118,22 +120,12 @@ export function Sidebar() {
                   />
                 </span>
               ) : (
-                Icon && <Icon className="w-5 h-5" />
+                (() => {
+                  const Icon = item.icon;
+                  return Icon ? <Icon className="w-5 h-5" /> : null;
+                })()
               )}
 
-              {image ? (
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={20}
-                  height={20}
-                  className="h-5 w-5"
-                  priority={image.priority}
-                />
-              ) : (
-                Icon && <Icon className="w-5 h-5" />
-              )}
-              
               {/* Tooltip */}
               <span className="absolute left-full ml-4 px-3 py-2 bg-bg-card border border-border rounded-input text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
                 {item.label}
