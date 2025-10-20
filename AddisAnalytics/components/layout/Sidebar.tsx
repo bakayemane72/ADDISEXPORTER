@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   { icon: Ship, label: "Shipments", href: "/shipments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: Settings, label: "Settings", href: "/settings" }
 ];
 
 export function Sidebar() {
