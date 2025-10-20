@@ -4,29 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  type LucideIcon,
   LayoutDashboard,
   Ship,
   BarChart3,
   FileText,
-  Settings,
-  type LucideIcon
+  Settings
 } from "lucide-react";
 
-type NavItem =
-  | {
-      label: string;
-      href: string;
-      icon: LucideIcon;
-    }
-  | {
-      label: string;
-      href: string;
-      image: {
-        src: string;
-        alt: string;
-        priority?: boolean;
-      };
-    };
+type NavItem = {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  image?: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+  };
+};
 
 const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
@@ -35,8 +30,7 @@ const navItems: NavItem[] = [
     href: "/lots",
     image: {
       src: "/addis-exporter-logo.svg",
-      alt: "Addis Exporter logo",
-      priority: true
+      alt: "Addis Exporter emblem"
     }
   },
   { icon: Ship, label: "Shipments", href: "/shipments" },
@@ -57,21 +51,20 @@ export function Sidebar() {
           alt="Addis Exporter logo"
           width={28}
           height={28}
-          className="h-7 w-7 object-contain"
           priority
         />
       </div>
 
       {/* Navigation */}
-        <nav className="flex flex-col gap-4">
-          {navItems.map((item) => {
-            const isImageItem = "image" in item;
-            const Icon = !isImageItem ? item.icon : null;
-            const isActive = pathname === item.href;
+      <nav className="flex flex-col gap-4">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const image = item.image;
+          const isActive = pathname === item.href;
 
-            return (
-              <Link
-                key={item.href}
+          return (
+            <Link
+              key={item.href}
               href={item.href}
               className={`
                 group relative w-12 h-12 flex items-center justify-center rounded-xl
@@ -82,19 +75,19 @@ export function Sidebar() {
                 }
               `}
               title={item.label}
-              >
-                {isImageItem ? (
-                  <Image
-                    src={item.image.src}
-                    alt={item.image.alt}
-                    width={20}
-                    height={20}
-                    className="h-5 w-5 object-contain"
-                    priority={item.image.priority}
-                  />
-                ) : (
-                  Icon && <Icon className="w-5 h-5" />
-                )}
+            >
+              {image ? (
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={20}
+                  height={20}
+                  className="h-5 w-5"
+                  priority={image.priority}
+                />
+              ) : (
+                Icon && <Icon className="w-5 h-5" />
+              )}
               
               {/* Tooltip */}
               <span className="absolute left-full ml-4 px-3 py-2 bg-bg-card border border-border rounded-input text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
