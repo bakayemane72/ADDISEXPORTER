@@ -15,6 +15,7 @@ let nextProcess;
 
 let tunnelProcess;
 let tunnelUrl;
+let tunnelReady = false;
 let shuttingDown = false;
 
 const closeTunnel = async () => {
@@ -109,6 +110,7 @@ const startTunnel = async () => {
       const match = text.match(/https?:\/\/[^\s]+/);
       if (match) {
         tunnelUrl = match[0];
+        tunnelReady = true;
         logShareUrl(tunnelUrl);
       }
     }
@@ -119,18 +121,38 @@ const startTunnel = async () => {
   });
 
   tunnelProcess.on('exit', (code) => {
-    if (!shuttingDown) {
-      console.error(`\nlocaltunnel process exited with code ${code ?? 0}. Stopping the server.`);
-      shutdown(code ?? 1);
+    if (shuttingDown) {
+      return;
     }
+
+    if (!tunnelReady) {
+      console.error(
+        '\nlocaltunnel could not be started. Your app is still running locally at http://localhost:' +
+          port +
+          '.\n' +
+          'Check your network connection or install localtunnel ahead of time with "npm install localtunnel" and try again.'
+      );
+      tunnelProcess = undefined;
+      return;
+    }
+
+    console.error(`\nlocaltunnel process exited with code ${code ?? 0}. Stopping the server.`);
+    shutdown(code ?? 1);
   });
 
   tunnelProcess.on('error', (error) => {
-    console.error('\nFailed to launch the localtunnel CLI.');
+    if (shuttingDown) {
+      return;
+    }
+
+    console.error('\nFailed to launch the localtunnel CLI. Your app is still available locally.');
     if (error) {
       console.error(error.message ?? error);
     }
-    shutdown(1);
+    console.error(
+      '\nInstall localtunnel with "npm install localtunnel" (or ensure registry access) before running npm run share.'
+    );
+    tunnelProcess = undefined;
   });
 };
 
