@@ -5,20 +5,44 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Coffee,
   Ship,
   BarChart3,
   FileText,
-  Settings
+  Settings,
+  type LucideIcon
 } from "lucide-react";
 
-const navItems = [
+type NavItem =
+  | {
+      label: string;
+      href: string;
+      icon: LucideIcon;
+    }
+  | {
+      label: string;
+      href: string;
+      image: {
+        src: string;
+        alt: string;
+        priority?: boolean;
+      };
+    };
+
+const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
-  { icon: Coffee, label: "Lots", href: "/lots" },
+  {
+    label: "Lots",
+    href: "/lots",
+    image: {
+      src: "/addis-exporter-logo.svg",
+      alt: "Addis Exporter logo",
+      priority: true
+    }
+  },
   { icon: Ship, label: "Shipments", href: "/shipments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: FileText, label: "Documents", href: "/documents" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: Settings, label: "Settings", href: "/settings" }
 ];
 
 export function Sidebar() {
@@ -39,14 +63,15 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-4">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
+        <nav className="flex flex-col gap-4">
+          {navItems.map((item) => {
+            const isImageItem = "image" in item;
+            const Icon = !isImageItem ? item.icon : null;
+            const isActive = pathname === item.href;
 
-          return (
-            <Link
-              key={item.href}
+            return (
+              <Link
+                key={item.href}
               href={item.href}
               className={`
                 group relative w-12 h-12 flex items-center justify-center rounded-xl
@@ -57,19 +82,19 @@ export function Sidebar() {
                 }
               `}
               title={item.label}
-            >
-              {item.label === "Lots" ? (
-                <Image
-                  src="/addis-exporter-logo.svg"
-                  alt="Addis Exporter logo"
-                  width={20}
-                  height={20}
-                  className="h-5 w-5 object-contain"
-                  priority
-                />
-              ) : (
-                Icon && <Icon className="w-5 h-5" />
-              )}
+              >
+                {isImageItem ? (
+                  <Image
+                    src={item.image.src}
+                    alt={item.image.alt}
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain"
+                    priority={item.image.priority}
+                  />
+                ) : (
+                  Icon && <Icon className="w-5 h-5" />
+                )}
               
               {/* Tooltip */}
               <span className="absolute left-full ml-4 px-3 py-2 bg-bg-card border border-border rounded-input text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
