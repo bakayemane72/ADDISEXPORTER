@@ -22,7 +22,36 @@ type NavItem =
       };
     };
 
-const navItems = [
+type NavItem =
+  | {
+      label: string;
+      href: string;
+      icon: LucideIcon;
+    }
+  | {
+      label: string;
+      href: string;
+      image: {
+        src: string;
+        alt: string;
+        priority?: boolean;
+      };
+    };
+  Settings
+} from "lucide-react";
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon?: LucideIcon;
+  image?: {
+    src: string;
+    alt: string;
+    priority?: boolean;
+  };
+};
+
+const navItems: NavItem[] = [
   { icon: LayoutDashboard, label: "Overview", href: "/" },
   {
     label: "Lots",
